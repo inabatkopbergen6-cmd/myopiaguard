@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MyopiaGuard Focus Mode — setup</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 32px;
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+        background: #f7faf9;
+        color: #1c2b27;
+      }
+      .wrap { max-width: 620px; margin: 0 auto; }
+      h1 { font-size: 1.35rem; letter-spacing: -0.02em; margin: 0 0 6px; }
+      .lede { color: #4d5f59; font-size: 0.92rem; margin: 0 0 22px; line-height: 1.55; }
+      .card { background: #fff; border: 1px solid #d9e2df; border-radius: 16px; padding: 22px 24px; margin-bottom: 18px; }
+      label { display: block; font-size: 0.84rem; font-weight: 600; color: #33443f; margin-bottom: 6px; }
+      input[type="text"], input[type="password"] {
+        width: 100%; box-sizing: border-box; padding: 9px 11px;
+        border: 1px solid #bcc8c4; border-radius: 10px; font: inherit; font-size: 0.9rem;
+      }
+      input:focus { outline: none; border-color: #17916f; box-shadow: 0 0 0 3px rgba(23,145,111,0.28); }
+      .hint { font-size: 0.78rem; color: #6b7c76; margin-top: 6px; }
+      .field { margin-bottom: 16px; }
+      button {
+        padding: 9px 16px; border-radius: 10px; border: 1px solid #107a5e;
+        background: #107a5e; color: #fff; font: inherit; font-size: 0.9rem; font-weight: 550; cursor: pointer;
+      }
+      button.secondary { background: #fff; color: #33443f; border-color: #bcc8c4; }
+      .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+      .check { display: flex; gap: 10px; align-items: flex-start; }
+      .check input { margin-top: 3px; accent-color: #107a5e; }
+      dl { display: grid; grid-template-columns: auto 1fr; gap: 5px 16px; margin: 0; font-size: 0.85rem; }
+      dt { color: #6b7c76; }
+      dd { margin: 0; font-weight: 550; text-align: right; font-variant-numeric: tabular-nums; }
+      ul { margin: 8px 0 0; padding-left: 18px; font-size: 0.86rem; color: #33443f; }
+      .warn { background: #fdf1dd; border-color: #f0dcbc; color: #92510b; font-size: 0.84rem; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>MyopiaGuard Focus Mode</h1>
+      <p class="lede">
+        Enrol this browser as a classroom PC. It will apply the browsing allowlist the teacher sets for the current
+        lesson, and nothing else — no keyboard lock, no screen capture, no application blocking.
+      </p>
+
+      <div class="card">
+        <div class="field">
+          <label for="serverUrl">Classroom server</label>
+          <input id="serverUrl" type="text" placeholder="http://myopiaguard.school.local:4000" />
+          <p class="hint">The same address the teacher dashboard is served from.</p>
+        </div>
+
+        <div class="field">
+          <label for="agentToken">Seat enrolment token</label>
+          <input id="agentToken" type="password" placeholder="paste the token for this seat" />
+          <p class="hint">
+            Found on the teacher dashboard under Setup → Workstations. It identifies this computer, never a student.
+          </p>
+        </div>
+
+        <div class="field">
+          <div class="check">
+            <input id="enforce" type="checkbox" checked />
+            <span>
+              <label for="enforce" style="margin: 0">Enforce the policy</label>
+              <span class="hint">
+                Unticking this stops the extension applying rules — an escape hatch for a technician during
+                maintenance. It is logged locally, and the server still records the policy it published.
+              </span>
+            </span>
+          </div>
+        </div>
+
+        <div class="row">
+          <button id="save">Save and apply now</button>
+          <button id="refresh" class="secondary">Re-check the policy</button>
+          <span id="status" class="hint"></span>
+        </div>
+      </div>
+
+      <div class="card warn" id="failure" hidden>
+        <strong>Last policy fetch failed.</strong>
+        <div id="failure-detail" class="hint" style="color: inherit"></div>
+        <p class="hint" style="color: inherit">
+          The currently applied rules stay in force until a fresh policy arrives. That is deliberate: a network blip
+          must not open every site to a class mid-lesson.
+        </p>
+      </div>
+
+      <div class="card">
+        <h1 style="font-size: 0.95rem; margin-bottom: 12px">Status</h1>
+        <dl>
+          <dt>Focus Mode</dt>
+          <dd id="s-active">—</dd>
+          <dt>Policy version</dt>
+          <dd id="s-version">—</dd>
+          <dt>Approved resources</dt>
+          <dd id="s-count">—</dd>
+          <dt>Last applied</dt>
+          <dd id="s-applied">—</dd>
+          <dt>Last check</dt>
+          <dd id="s-poll">—</dd>
+        </dl>
+        <ul id="s-domains"></ul>
+      </div>
+    </div>
+    <script src="options.js"></script>
+  </body>
+</html>

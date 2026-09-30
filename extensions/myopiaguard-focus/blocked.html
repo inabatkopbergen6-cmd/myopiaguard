@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Focus Mode — MyopiaGuard</title>
+    <style>
+      :root { color-scheme: light; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+        background: radial-gradient(760px 380px at 50% -10%, #e3f3ed 0%, #f7faf9 60%);
+        color: #1c2b27;
+      }
+      .card {
+        width: min(560px, calc(100vw - 48px));
+        background: #fff;
+        border: 1px solid #d9e2df;
+        border-radius: 18px;
+        box-shadow: 0 16px 40px rgba(15, 26, 23, 0.1);
+        padding: 30px 32px;
+      }
+      .mark {
+        width: 40px; height: 40px; border-radius: 12px;
+        background: linear-gradient(140deg, #17916f, #0b5a45);
+        display: grid; place-items: center; margin-bottom: 18px;
+      }
+      h1 { font-size: 1.4rem; margin: 0 0 10px; letter-spacing: -0.02em; }
+      p { margin: 0 0 12px; line-height: 1.55; color: #4d5f59; font-size: 0.95rem; }
+      .approved {
+        margin-top: 18px; padding: 14px 16px;
+        background: #f7faf9; border: 1px solid #e6ecea; border-radius: 12px;
+      }
+      .approved h2 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: #6b7c76; margin: 0 0 8px; }
+      ul { margin: 0; padding-left: 18px; color: #33443f; font-size: 0.9rem; }
+      li { margin-bottom: 3px; }
+      .foot { margin-top: 20px; font-size: 0.78rem; color: #93a29d; }
+      a { color: #0b5a45; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="mark" aria-hidden="true">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round">
+          <circle cx="12" cy="12" r="8.5" />
+          <path d="M3.5 12h17M12 3.5c2.2 2.4 3.3 5.3 3.3 8.5S14.2 18.1 12 20.5c-2.2-2.4-3.3-5.3-3.3-8.5S9.8 5.9 12 3.5Z" />
+        </svg>
+      </div>
+
+      <h1>Focus Mode is on for this lesson</h1>
+      <p>
+        This site is not on the list your teacher approved for the lesson. Ask them if you need it — they can add
+        it in a few seconds.
+      </p>
+
+      <div class="approved">
+        <h2>Approved for this lesson</h2>
+        <ul id="approved-list">
+          <li>Loading the approved list…</li>
+        </ul>
+      </div>
+
+      <p class="foot">
+        Focus Mode only affects which websites load. Your keyboard, mouse and screen stay yours — nothing is locked
+        or monitored by MyopiaGuard.
+      </p>
+    </div>
+
+    <script src="blocked.js"></script>
+  </body>
+</html>

@@ -1,0 +1,586 @@
+/**
+ * Sign-in / landing page — the "Horizon & Viewport" surface.
+ *
+ * Designed with authentic craft: an atmospheric perspective stage that demonstrates
+ * the product's eye-health promise, accompanied by an architectural bento layout
+ * of the four core pillars and an elevated obsidian-emerald sign-in console.
+ */
+
+.auth {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-sunken);
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Atmospheric backdrop: luminous daylight fading into an ambient horizon glow */
+.auth::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(80% 50% at 75% 100%, rgba(229, 99, 56, 0.14) 0%, rgba(229, 99, 56, 0) 55%),
+    radial-gradient(70% 50% at 20% 0%, rgba(110, 227, 191, 0.2) 0%, rgba(110, 227, 191, 0) 60%),
+    linear-gradient(180deg, #f7faf9 0%, #edf4f1 50%, #e2ece7 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.auth > * { position: relative; z-index: 1; }
+
+/* ------------------------------------------------------------------- header */
+
+.auth__bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 40px;
+  backdrop-filter: blur(14px) saturate(1.2);
+  background: rgba(247, 250, 249, 0.75);
+  border-bottom: 1px solid rgba(17, 29, 26, 0.07);
+}
+
+.auth__bar .brand__name {
+  font-family: var(--font-display);
+  font-size: 1.12rem;
+  letter-spacing: -0.02em;
+}
+
+.auth__bar-tag {
+  padding-left: 14px;
+  border-left: 1px solid var(--border);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ink-500);
+  letter-spacing: 0.02em;
+}
+
+.auth__bar-spacer {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* --------------------------------------------------------------------- main */
+
+.auth__main {
+  flex: 1;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 20px 32px 36px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.75fr);
+  gap: 36px;
+  align-items: start;
+}
+
+.auth__pitch {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth__pitch-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  align-self: flex-start;
+  padding: 4px 12px;
+  border-radius: var(--r-full);
+  background: var(--distance-100);
+  color: var(--distance-800);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid rgba(27, 94, 76, 0.18);
+  box-shadow: 0 1px 2px rgba(27, 94, 76, 0.06);
+}
+
+.auth__headline {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3.2vw, 2.75rem);
+  font-weight: 600;
+  letter-spacing: -0.028em;
+  line-height: 1.14;
+  max-width: 18ch;
+  color: var(--ink-950);
+}
+
+.auth__lede {
+  font-size: 0.94rem;
+  line-height: 1.58;
+  color: var(--ink-600);
+  max-width: 52ch;
+  margin: 0;
+}
+
+/* -------------------------------------------------------- hero viewport */
+
+.hero__stage {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 2px;
+}
+
+.hero__viewport {
+  position: relative;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--distance-950);
+  height: 185px;
+  display: flex;
+  align-items: flex-end;
+  border: 1px solid rgba(110, 227, 191, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 12px 28px -6px rgba(5, 20, 16, 0.24);
+}
+
+/* Depth of field layer: atmospheric softening that sharpens on interaction */
+.hero__scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  filter: blur(4px) saturate(1.05);
+  transform: scale(1.04);
+  transition: filter 600ms var(--ease-out), transform 600ms var(--ease-out);
+}
+
+.hero__scene > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.auth--approaching .hero__scene {
+  filter: blur(0px) saturate(1.15);
+  transform: scale(1.002);
+}
+
+.hero__viewport-glass {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding: 10px 18px;
+  background: linear-gradient(180deg, transparent 0%, rgba(4, 18, 14, 0.8) 40%, rgba(4, 18, 14, 0.95) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  backdrop-filter: blur(4px);
+}
+
+.hero__viewport-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.73rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  color: var(--mint-300);
+  background: rgba(110, 227, 191, 0.14);
+  padding: 4px 10px;
+  border-radius: var(--r-full);
+  border: 1px solid rgba(110, 227, 191, 0.28);
+}
+
+.hero__viewport-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mint-400);
+  box-shadow: 0 0 8px var(--mint-400);
+  animation: pulse 2.4s infinite;
+}
+
+.hero__viewport-caption {
+  font-size: 0.75rem;
+  color: var(--on-dark-muted);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* ----------------------------------------------------- bento principles */
+
+.hero__bento {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.hero__bento-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(17, 29, 26, 0.08);
+  box-shadow: var(--shadow-card);
+  transition: transform var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.hero__bento-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--distance-400);
+  box-shadow: var(--shadow-lift);
+}
+
+.hero__bento-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hero__bento-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  background: var(--distance-50);
+  color: var(--distance-700);
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(27, 94, 76, 0.14);
+}
+
+.hero__bento-card--1 .hero__bento-icon {
+  background: var(--sun-50);
+  color: var(--sun-600);
+  border-color: rgba(229, 99, 56, 0.16);
+}
+
+.hero__bento-card--2 .hero__bento-icon {
+  background: var(--petrol-50);
+  color: var(--petrol-600);
+  border-color: rgba(38, 99, 132, 0.16);
+}
+
+.hero__bento-card--3 .hero__bento-icon {
+  background: var(--distance-100);
+  color: var(--distance-800);
+  border-color: rgba(27, 94, 76, 0.18);
+}
+
+.hero__bento-tag {
+  font-size: 0.65rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  color: var(--ink-500);
+  text-transform: uppercase;
+}
+
+.hero__bento-title {
+  font-size: 0.88rem;
+  font-weight: 750;
+  color: var(--ink-950);
+  line-height: 1.25;
+}
+
+.hero__bento-body {
+  font-size: 0.78rem;
+  line-height: 1.48;
+  color: var(--ink-600);
+  margin: 0;
+}
+
+/* -------------------------------------------------------- sign-in card */
+
+.auth__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth__card {
+  padding: 24px 26px 20px;
+  border-radius: var(--r-lg);
+  background:
+    radial-gradient(90% 70% at 50% 0%, rgba(110, 227, 191, 0.08) 0%, transparent 70%),
+    linear-gradient(168deg, #0f2d24 0%, #061813 100%);
+  color: var(--on-dark);
+  border: 1px solid rgba(110, 227, 191, 0.24);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 20px 44px -10px rgba(5, 20, 16, 0.36);
+}
+
+.auth__card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 18px;
+}
+
+.auth__card-head h2 {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--on-dark);
+}
+
+.auth__card-head p {
+  font-size: var(--text-small);
+  color: var(--on-dark-muted);
+  margin: 0;
+}
+
+.auth__form {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.auth__form .field > span {
+  font-size: 0.82rem;
+  color: var(--on-dark-muted);
+  font-weight: 650;
+}
+
+.auth__form .input {
+  height: 44px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(244, 250, 247, 0.22);
+  color: var(--on-dark);
+  font-size: 0.94rem;
+  border-radius: var(--r-control);
+  transition: all var(--dur-fast) var(--ease-out);
+}
+
+.auth__form .input::placeholder {
+  color: rgba(244, 250, 247, 0.4);
+}
+
+.auth__form .input:focus {
+  border-color: var(--mint-400);
+  box-shadow: 0 0 0 3px rgba(110, 227, 191, 0.28);
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+}
+
+.auth__submit-btn {
+  margin-top: 6px;
+  height: 46px;
+  background: linear-gradient(180deg, #4ed9ae 0%, #2bb88d 100%);
+  border: 1px solid #2bb88d;
+  color: #041611;
+  font-size: 0.94rem;
+  font-weight: 750;
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 12px rgba(78, 217, 174, 0.35);
+  transition: all var(--dur-fast) var(--ease-out);
+}
+
+.auth__submit-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #64e4bc 0%, #35c99c 100%);
+  border-color: #35c99c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(78, 217, 174, 0.45);
+}
+
+.auth__aside {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--on-dark-line);
+}
+
+.auth__enrol-btn {
+  border: 1px solid rgba(244, 250, 247, 0.22);
+  color: var(--on-dark);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.86rem;
+  font-weight: 650;
+  padding: 10px 14px;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+
+.auth__enrol-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  border-color: rgba(244, 250, 247, 0.4);
+}
+
+.auth__pc-hint {
+  font-size: 0.77rem;
+  line-height: 1.5;
+  color: var(--on-dark-muted);
+  margin: 0;
+}
+
+/* ---------------------------------------------------- demo switcher */
+
+.auth__demo-box {
+  border: 1px solid rgba(17, 29, 26, 0.1);
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.auth__demo-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-small);
+  font-weight: 700;
+  color: var(--ink-800);
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+
+.auth__demo-trigger:hover {
+  background: var(--distance-50);
+  color: var(--distance-800);
+}
+
+.auth__demo-trigger-label {
+  font-weight: 700;
+}
+
+.auth__demo-pass {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-600);
+  font-weight: 650;
+  padding: 3px 8px;
+  border-radius: var(--r-xs);
+  background: var(--ink-100);
+  border: 1px solid var(--ink-200);
+}
+
+.auth__demo-chevron {
+  margin-left: auto;
+  color: var(--ink-400);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.auth__demo-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.auth__accounts {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 12px 16px 16px;
+  border-top: 1px solid rgba(17, 29, 26, 0.08);
+}
+
+.auth__accounts .auth__pc-hint {
+  color: var(--ink-500);
+  font-size: 0.78rem;
+  margin-top: 4px;
+}
+
+.auth__account {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid rgba(17, 29, 26, 0.09);
+  border-radius: var(--r-sm);
+  background: var(--white);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(6, 20, 16, 0.03);
+  transition: border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.auth__account:hover {
+  border-color: var(--distance-400);
+  background: var(--distance-50);
+  box-shadow: var(--shadow-sm);
+}
+
+.auth__account--active {
+  border-color: var(--distance-600);
+  background: var(--distance-50);
+  box-shadow: 0 0 0 2px rgba(27, 94, 76, 0.2);
+}
+
+.auth__account-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.auth__account-name {
+  font-size: 0.84rem;
+  font-weight: 750;
+  color: var(--ink-950);
+}
+
+.auth__account-login {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-500);
+}
+
+.auth__account-badge {
+  font-size: 0.68rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 9px;
+  border-radius: var(--r-xs);
+  background: var(--ink-100);
+  color: var(--ink-600);
+  border: 1px solid rgba(17, 29, 26, 0.06);
+}
+
+.auth__account--active .auth__account-badge {
+  background: var(--distance-100);
+  color: var(--distance-800);
+  border-color: rgba(27, 94, 76, 0.2);
+}
+
+/* ---------------------------------------------------------------- responsive */
+
+@media (max-width: 1060px) {
+  .auth__main {
+    grid-template-columns: 1fr;
+    gap: 36px;
+    padding: 16px 24px 36px;
+  }
+  .auth__headline { max-width: 24ch; }
+  .auth__bar { padding: 14px 24px; }
+}
+
+@media (max-width: 640px) {
+  .hero__bento { grid-template-columns: 1fr; }
+  .auth__bar-tag { display: none; }
+  .hero__viewport-glass { flex-direction: column; align-items: flex-start; gap: 6px; }
+}

@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "MyopiaGuard Focus Mode",
+  "version": "1.0.0",
+  "description": "Enforces a teacher's session-scoped browsing allowlist on a school-managed classroom PC.",
+  "minimum_chrome_version": "116",
+  "permissions": ["declarativeNetRequest", "storage", "alarms"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "options_page": "options.html",
+  "action": {
+    "default_title": "MyopiaGuard Focus Mode"
+  }
+}

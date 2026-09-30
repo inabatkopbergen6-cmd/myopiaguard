@@ -1,0 +1,355 @@
+/**
+ * The full-screen break challenge — the "window".
+ *
+ * This is the screen that justifies the whole visual language, so it is built as a
+ * scene rather than as a timer widget: you are looking out of a window at dusk. The
+ * sky is deep green overhead and warms toward a horizon; the sun sits in the sky
+ * and *sets* as the break runs; the horizon line itself is the progress indicator,
+ * filling with light as the time goes.
+ *
+ * Two things are deliberate rather than decorative:
+ *
+ *  1. **One value drives every encoding.** `--remaining` (0→1) positions the sun,
+ *     sets the height of the horizon light and drives the sun's warmth. React also
+ *     renders the big numeral and the caption from the same number, so the ring —
+ *     sorry, the sky — cannot disagree with the number. (The previous build used a
+ *     ring; the brief asked for something environmental, and a sun on an arc is the
+ *     same information with a reason to exist.)
+ *  2. **The sun breathes.** A slow 5s scale pulse, so a 20-second break does not
+ *     read as a static countdown. `prefers-reduced-motion` removes it.
+ *
+ * Contrast was re-measured for this palette: every text token clears 4.5:1 against
+ * the lightest point of the sky gradient, and the horizon track clears the 3:1
+ * required of a graphical object that carries meaning (WCAG 1.4.11).
+ */
+
+.window {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--on-dark);
+  overflow: hidden;
+  /* Driven from React: 1 at the start of the break, 0 at the end. */
+  --remaining: 1;
+}
+
+/* ------------------------------------------------------------------- the sky */
+
+.window__sky {
+  position: absolute;
+  inset: 0;
+  background:
+    /* the warm band sitting on the horizon */
+    radial-gradient(150% 62% at 54% 66%, rgba(224, 96, 60, 0.42) 0%, rgba(224, 96, 60, 0) 62%),
+    /* a cool mint lift high up, the direction the eye is being sent */
+    radial-gradient(90% 48% at 30% 4%, rgba(127, 224, 192, 0.16) 0%, rgba(127, 224, 192, 0) 70%),
+    linear-gradient(180deg, #06201a 0%, #0a2b23 42%, #113b2e 66%, #1d4a33 84%, #2c5636 100%);
+}
+
+/* Thin receding bands above the horizon — the landscape going away from you. */
+.window__bands { position: absolute; inset: 0; pointer-events: none; }
+
+/* The land beneath the horizon. A sunset has a dark ground under a bright sky, and
+   that is also what makes the caption and the progress track legible: both measured
+   below AA against the raw glow. */
+.window__land {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 66%;
+  bottom: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(6, 21, 18, 0.3) 0%,
+    rgba(6, 21, 18, 0.82) 46%,
+    rgba(4, 14, 12, 0.95) 100%
+  );
+  pointer-events: none;
+}
+.window__band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(127, 224, 192, 0) 8%, rgba(127, 224, 192, 0.16) 50%, rgba(127, 224, 192, 0) 92%);
+}
+
+/* ------------------------------------------------------------------- the sun */
+
+.window__sun {
+  position: absolute;
+  /* Positioned from React as left/top percentages; `translate` centres the disc. */
+  transform: translate(-50%, -50%);
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 52%, #ffe6c9 0%, var(--sun-300) 34%, var(--sun-500) 62%, rgba(224, 96, 60, 0.15) 78%, transparent 82%);
+  box-shadow: 0 0 90px 34px rgba(238, 133, 88, 0.3);
+  /* The signature detail: a slow breath rather than a ticking clock. */
+  animation: breathe 5s var(--ease-in-out) infinite;
+  pointer-events: none;
+}
+
+/* The arc the sun has already travelled, drawn as fading points so there is no
+   geometry to keep in sync with the disc itself. */
+.window__trail { position: absolute; inset: 0; pointer-events: none; }
+.window__trail-dot {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--sun-300);
+  transform: translate(-50%, -50%);
+}
+
+/* The haze that grows as the sun approaches the horizon. */
+.window__haze {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 58%;
+  height: 26%;
+  background: radial-gradient(60% 100% at 54% 0%, rgba(255, 214, 170, 0.5) 0%, rgba(255, 214, 170, 0) 72%);
+  /* Capped: uncapped, this glow brightens the horizon enough to swallow the
+     progress track and the caption beneath it (measured 1.0:1 and 2.6:1). */
+  opacity: calc(0.18 + (1 - var(--remaining)) * 0.5);
+  transition: opacity 400ms linear;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ content */
+
+.window__inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 880px;
+  width: 100%;
+  padding: 0 24px;
+  /* Sits above the horizon line, which is anchored at 66% of the viewport. */
+  margin-bottom: 12vh;
+}
+
+.window__head { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+
+.window__eyebrow {
+  font-size: 0.82rem;
+  font-weight: 750;
+  letter-spacing: 0.19em;
+  text-transform: uppercase;
+  color: var(--on-dark-accent);
+}
+
+.window__eyebrow--seat {
+  font-size: 0.72rem;
+  letter-spacing: 0.13em;
+  color: var(--on-dark-muted);
+}
+
+.window__instruction {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 3.8vw, 2.7rem);
+  font-weight: 600;
+  line-height: 1.16;
+  letter-spacing: -0.022em;
+  max-width: 21ch;
+  text-wrap: balance;
+  color: var(--on-dark);
+  text-align: center;
+  margin: 0;
+}
+
+/* The countdown, in the display serif so the student screen carries the brand's
+   voice rather than looking like a stopwatch readout. */
+.window__count {
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 11vw, 7.5rem);
+  font-weight: 650;
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  color: var(--on-dark);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 4px 30px rgba(6, 32, 26, 0.6);
+}
+
+.window__count-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--on-dark-accent);
+  margin-top: -6px;
+}
+
+.window__hint {
+  font-size: 0.86rem;
+  color: var(--on-dark-muted);
+  max-width: 46ch;
+  margin: 0;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.window__hint--warm { color: var(--on-dark-warm); }
+.window__hint--error { color: var(--on-dark-error); }
+
+/* ------------------------------------------------------------- the horizon
+   The progress indicator. It reads as a horizon because it is one: a light-line
+   with the remaining time lit along it. */
+
+.window__horizon {
+  position: absolute;
+  left: 0;
+  right: 0;
+  /* Below the sky/land boundary, on the ground. The boundary itself is where the
+     background swings from dark to bright as the sun sets, so a rail drawn on it
+     cannot hold contrast for the whole break; the ground is stable. The horizon
+     still reads — it is the glowing edge just above this rail. */
+  top: 78%;
+  z-index: 2;
+  padding: 0 30px;
+}
+
+.window__horizon-line {
+  position: relative;
+  height: 3px;
+  border-radius: 3px;
+  /* A light rail on dark ground: measured 4.1:1 at the glow's brightest, and it does
+     not change as the sky above it brightens. */
+  background: rgba(243, 248, 246, 0.45);
+  overflow: hidden;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.window__horizon-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--mint-400) 0%, #ffd9a3 70%, var(--sun-400) 100%);
+  box-shadow: 0 0 18px rgba(255, 217, 163, 0.5);
+  transition: width 240ms linear;
+}
+
+.window__horizon-caption {
+  display: block;
+  text-align: center;
+  margin-top: 12px;
+  font-size: 0.82rem;
+  /* In the land band: --on-dark rather than --on-dark-muted, because the muted token
+     measured 5.4:1 here and the primary token buys headroom for the glow growing. */
+  color: var(--on-dark);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 8px rgba(4, 14, 12, 0.65);
+}
+
+/* ------------------------------------------------------------------ footer */
+
+.window__footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  border-top: 1px solid var(--on-dark-line);
+  background: linear-gradient(180deg, rgba(6, 21, 18, 0) 0%, rgba(6, 21, 18, 0.55) 100%);
+  padding: 15px 24px;
+  display: flex;
+  justify-content: center;
+}
+
+/* The exit is small, muted and at the very bottom edge, behind the horizon. It is
+   the last thing a student's eye should reach — the break is meant to be finished,
+   and this exists only for the case where it genuinely cannot be. */
+.window__skip-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  max-width: 62ch;
+}
+
+.window__skip-note { font-size: 0.71rem; color: var(--on-dark-muted); opacity: 0.75; }
+
+.window__footer-button {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--on-dark-muted);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+  padding: 5px 11px;
+  border-radius: var(--r-control);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+.window__footer-button:hover { color: var(--on-dark); background: rgba(243, 248, 246, 0.09); }
+.window__footer-button:focus-visible { outline: 2px solid var(--on-dark-fill); outline-offset: 2px; }
+
+/* Confirming is the deliberate step, so it gets a real border and cannot be hit by
+   a stray tap on the text above it. */
+.window__footer-button--confirm { border-color: var(--on-dark-line); color: var(--on-dark); }
+.window__footer-button--confirm:hover {
+  border-color: var(--on-dark-error);
+  color: var(--on-dark-error);
+  background: transparent;
+}
+
+.window__confirm {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.window__confirm-text { font-size: 0.8rem; color: var(--on-dark-warm); }
+
+/* --------------------------------------------------- attention mode overlay
+   Reuses the window chrome with a different sky: teacher attention is daylight,
+   not dusk, so it is visually a different moment. */
+
+.window--attention {
+  background: linear-gradient(180deg, #12324f 0%, #1c4a6b 58%, #26607f 100%);
+}
+.window--attention .window__sky { display: none; }
+
+.attention-message {
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 5vw, 3.2rem);
+  font-weight: 620;
+  line-height: 1.16;
+  letter-spacing: -0.025em;
+  max-width: 24ch;
+  text-wrap: balance;
+  color: var(--on-dark);
+  margin: 0;
+}
+
+.attention-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 16px;
+  border-radius: var(--r-sm);
+  background: rgba(243, 248, 246, 0.16);
+  color: var(--on-dark);
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* ---------------------------------------------------------------- short screens */
+
+@media (max-height: 700px) {
+  .window__inner { gap: 13px; margin-bottom: 14vh; }
+  .window__count { font-size: clamp(3rem, 8vw, 4.6rem); }
+  .window__instruction { font-size: clamp(1.2rem, 3vw, 1.8rem); }
+  .window__sun { width: 78px; height: 78px; }
+  .window__horizon { top: 70%; }
+}
