@@ -136,10 +136,24 @@
   --on-dark-error: #ffb8ad;
   --on-dark-line: rgba(244, 250, 247, 0.16);
 
-  /* ---- Type ---- */
-  --font-display: "Bitter", "Iowan Old Style", Georgia, serif;
-  --font-sans: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* ---- Type ----
+     The `… Fallback` families are local-only faces declared in fonts.css with
+     metric overrides, so the pre-swap render is metrically close to the real
+     face and the page does not jump when the webfont lands. */
+  --font-display: "Bitter", "Bitter Fallback", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Manrope", "Manrope Fallback", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", "Segoe UI Mono", Menlo, monospace;
+
+  /* ---- Cyrillic tracking ----
+     Letterspacing tuned on Latin is too loose for Russian: Cyrillic lowercase
+     forms are wider and uppercase forms more uniform, so the same positive
+     tracking that clarifies "WORKSTATIONS" leaves "РАБОЧИЕ МЕСТА" swimming.
+     Typography that only holds up in one of the two shipped languages is not
+     typography. These two tokens carry the per-language values, applied in the
+     `:lang(ru)` block below, and every uppercase/eyebrow rule reads them. */
+  --track-eyebrow: 0.13em;
+  --track-label: 0.09em;
+  --track-wide: 0.24em;
 
   --text-display: clamp(2.2rem, 3.8vw, 3.2rem);
   --text-h1: clamp(1.6rem, 2.4vw, 2.05rem);
@@ -198,8 +212,13 @@ body {
   color: var(--ink-800);
   background: var(--surface-sunken);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   font-feature-settings: "tnum" 0;
+  /* Both faces ship a real weight range, so any synthesised bold or oblique is a
+     browser fallback rather than a design decision — and a synthesised oblique on
+     Cyrillic is visibly smeared. Refuse them. */
+  font-synthesis: none;
 }
 
 /* ---- Editorial headings: the slab serif, tight tracking, confident weights ---- */
@@ -228,9 +247,66 @@ h4,
   font-family: var(--font-sans);
   font-size: var(--text-eyebrow);
   font-weight: 700;
-  letter-spacing: 0.13em;
+  letter-spacing: var(--track-eyebrow);
   text-transform: uppercase;
   color: var(--ink-500);
+}
+
+/* Russian typography corrections.
+ *
+ * Two things change once the interface is Cyrillic rather than Latin:
+ *   1. Uppercase tracking must come in. See the `--track-*` tokens above.
+ *   2. Cyrillic has no true italic in most of these faces, so a browser asked for
+ *      one synthesises an oblique — a smeared fake. `font-synthesis: none` makes
+ *      it fall back to the roman, which is the correct behaviour and is what a
+ *      Russian typographer would expect. Latin keeps synthetic bold allowed
+ *      because Manrope ships a full weight range and never needs it anyway.
+ */
+:lang(ru) {
+  --track-eyebrow: 0.085em;
+  --track-label: 0.06em;
+  --track-wide: 0.17em;
+}
+
+:lang(ru) em,
+:lang(ru) i,
+:lang(ru) cite {
+  font-style: normal;
+}
+
+/*
+ * iOS Safari zooms the whole page when a focused form field renders below 16px,
+ * and the viewport then stays zoomed after the field is blurred. Every text
+ * control in this app is 14–15px by design, so every form on an iPad — including
+ * the enrolment form a technician fills in on the classroom PC — triggered it.
+ * Raising the size only on touch-sized viewports keeps the desktop scale intact.
+ */
+@media (max-width: 820px) {
+  .input,
+  .select,
+  .textarea,
+  .auth__form .input,
+  .device__enrol-form .input,
+  .lang-switch__select {
+    font-size: 16px;
+  }
+}
+
+/* The one place a Russian string can still overflow its box.
+
+   `.tiny` and `.badge` set uppercase Latin-shaped copy that was measured against
+   English word lengths. Cyrillic equivalents are routinely 20–35% longer
+   ("РАБОЧИЕ МЕСТА" against "WORKSTATIONS"), so any of them allowed to sit in a
+   fixed-width or nowrap container clips. Allowing a mid-word break is ugly; giving
+   these labels room to wrap onto a second line is not. */
+:lang(ru) .badge,
+:lang(ru) .flag-chip,
+:lang(ru) .stat__label,
+:lang(ru) .metric-card__label,
+:lang(ru) .page__eyebrow {
+  white-space: normal;
+  overflow-wrap: break-word;
+  hyphens: none;
 }
 
 p { margin: 0 0 0.65em; }
@@ -251,55 +327,19 @@ a:hover { color: var(--distance-600); }
 }
 
 /* ------------------------------------------------------------- surfaces
-   Four deliberate treatments. Nothing gets a border *and* a shadow *and* a
-   large radius; that combination is what reads as an off-the-shelf component. */
+ *
+ * Four deliberate treatments. Nothing gets a border *and* a shadow *and* a
+ * large radius; that combination is what reads as an off-the-shelf component.
+ *
+ * `.panel` and `.card` used to be two full parallel definitions of the same
+ * object — the same white surface, the same radius, the same shadow, written out
+ * twice with drifting values (`rgba(17,29,26,0.07)` in one and `0.08` in the
+ * other). `.panel` had no consumer at all: `Card` in `components/ui.jsx` is the
+ * only surface component and it emits `.card`. The alias is gone and `.card` is
+ * now the single definition, which is why the border colour below is one value
+ * instead of two near-misses.
+ */
 
-/* ------------------------------------------------------------- surfaces */
-
-.panel {
-  background: var(--surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-  box-shadow: var(--shadow-card);
-  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
-}
-
-.panel--pad { padding: 20px 22px; }
-.panel--flush { padding: 0; }
-
-/* Tinted: for grouped content that belongs together conceptually. */
-.panel--tinted {
-  background: var(--accent-soft);
-  border: 1px solid rgba(27, 94, 76, 0.08);
-  border-radius: var(--r-lg);
-  box-shadow: none;
-}
-
-/* Deep: the brand block. Used sparingly for high-impact moments. */
-.panel--deep {
-  background: linear-gradient(165deg, var(--distance-700) 0%, #061d17 100%);
-  border: 1px solid rgba(110, 227, 191, 0.2);
-  border-radius: var(--r-lg);
-  color: var(--on-dark);
-  box-shadow: var(--shadow-float);
-}
-.panel--deep h1,
-.panel--deep h2,
-.panel--deep h3,
-.panel--deep h4 { color: var(--on-dark); }
-.panel--deep .muted { color: var(--on-dark-muted); }
-
-/* Bare: a section divided by a hairline instead of wrapped in a box. */
-.panel--bare {
-  background: transparent;
-  border: 0;
-  border-top: var(--hairline);
-  border-radius: 0;
-  padding-top: 18px;
-  box-shadow: none;
-}
-
-/* Kept as an alias so existing markup keeps working seamlessly. */
 .card {
   background: var(--surface);
   border: 1px solid rgba(17, 29, 26, 0.08);
@@ -309,12 +349,16 @@ a:hover { color: var(--distance-600); }
 }
 .card--pad { padding: 20px 22px; }
 .card--flush { padding: 0; }
+
+/* Tinted: for grouped content that belongs together conceptually. */
 .card--tinted {
   background: var(--accent-soft);
   border: 1px solid rgba(27, 94, 76, 0.08);
   border-radius: var(--r-lg);
   box-shadow: none;
 }
+
+/* Deep: the brand block. Used sparingly for high-impact moments. */
 .card--deep {
   background: linear-gradient(165deg, var(--distance-700) 0%, #061d17 100%);
   border: 1px solid rgba(110, 227, 191, 0.2);
@@ -334,8 +378,7 @@ a:hover { color: var(--distance-600); }
   border-bottom: 1px solid var(--border-subtle);
 }
 .card__header h3 { font-size: 1.02rem; }
-.card--tinted .card__header,
-.card--deep .card__header { border-bottom-color: rgba(19, 29, 27, 0.08); }
+.card--tinted .card__header { border-bottom-color: rgba(27, 94, 76, 0.1); }
 .card--deep .card__header { border-bottom-color: var(--on-dark-line); }
 .card__body { padding: 18px 20px; }
 
@@ -361,11 +404,16 @@ a:hover { color: var(--distance-600); }
 /* ---------------------------------------------------------------- buttons */
 
 .btn {
+  /* `box-sizing: border-box` so the 1px border and the padding below can never
+     add to the declared width/height — the button's box must be identical at rest
+     and on hover. */
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   padding: 8px 16px;
+  min-height: 36px;
   border-radius: var(--r-control);
   border: 1px solid var(--ink-300);
   background: var(--white);
@@ -376,20 +424,43 @@ a:hover { color: var(--distance-600); }
   letter-spacing: 0.005em;
   cursor: pointer;
   box-shadow: 0 1px 2px rgba(6, 20, 16, 0.05);
-  transition: all var(--dur-fast) var(--ease-out);
+  /* Nothing in this file moves a button any more, so the transform is pinned here
+     to say so, and the transition names only the properties that actually change.
+     `transition: all` was the flicker amplifier: it animated `transform` and
+     `box-shadow` too, so every hover repainted geometry rather than just colour. */
+  transform: none;
+  transition: background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
   white-space: nowrap;
   user-select: none;
 }
 
+/*
+ * Hover changes colour and nothing else.
+ *
+ * The `transform: translateY(-1px)` and `box-shadow: var(--shadow-lift)` that used
+ * to live here moved the button's box on hover. On a flat surface that is merely
+ * fussy; inside `.auth__card`, which carries a `backdrop-filter`, it is a flicker:
+ * the element shifts out of its own paint bounds, the blurred backdrop behind it
+ * has to be re-rasterised, and at the container's edge the 1px translate flips
+ * sub-pixel rounding back and forth on every repaint. The button now has no
+ * box-affecting hover state at all — no padding, border-width, font-size, margin
+ * or transform — so this class of bug cannot recur here or in any descendant.
+ *
+ * Feedback is carried by colour alone, which is also the more accessible choice:
+ * a hover state that is only a slight vertical shift is invisible to a pointer
+ * user who is not watching the exact pixel.
+ */
 .btn:hover:not(:disabled) {
   background: var(--ink-50);
   border-color: var(--ink-400);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-lift);
+  color: var(--ink-950);
 }
 .btn:active:not(:disabled) {
-  transform: translateY(1px);
-  box-shadow: 0 1px 2px rgba(6, 20, 16, 0.04);
+  /* Pressed feedback is a colour step, not a movement, for the same reason. */
+  background: var(--ink-100);
+  border-color: var(--ink-400);
 }
 .btn:disabled {
   opacity: 0.48;
@@ -626,7 +697,7 @@ label { font-weight: 650; color: var(--ink-700); font-size: var(--text-small); }
   font-family: var(--font-sans);
   font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.09em;
+  letter-spacing: var(--track-label);
   color: var(--ink-500);
   font-weight: 750;
   padding: 10px 14px;
@@ -723,8 +794,8 @@ label { font-weight: 650; color: var(--ink-700); font-size: var(--text-small); }
 /* ------------------------------------------------------- custom scrollbars */
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -732,12 +803,30 @@ label { font-weight: 650; color: var(--ink-700); font-size: var(--text-small); }
 ::-webkit-scrollbar-thumb {
   background: var(--ink-300);
   border-radius: var(--r-full);
+  /* A border in the track colour, so the thumb reads as a floating pill rather
+     than a bar wedged against the edge of the viewport. */
+  border: 3px solid transparent;
+  background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--ink-400);
+  background-clip: content-box;
 }
 
-* {
+/*
+ * Scrollbar width is set per scroll container, never with `*`.
+ *
+ * The previous rule was `* { scrollbar-width: thin }`, which halved the width of
+ * every scrollbar in the application — including the one on the classroom-PC view,
+ * where a student with a trackpad or a touch screen has to discover that there is
+ * more content below. A thin, low-contrast bar on a kiosk is an accessibility
+ * regression dressed up as polish. Only surfaces that genuinely need to recede get
+ * the thin treatment; the document keeps the platform default.
+ */
+.drawer__body,
+.modal,
+.policy-block,
+.table-scroll {
   scrollbar-width: thin;
   scrollbar-color: var(--ink-300) transparent;
 }

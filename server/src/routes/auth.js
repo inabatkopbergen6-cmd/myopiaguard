@@ -9,6 +9,7 @@ import {
   savePreferences,
 } from '../auth.js';
 import config from '../config.js';
+import { DEMO_PASSWORD } from '../demo.js';
 import { ApiError, handler } from '../lib/http.js';
 import { all, get, run } from '../db.js';
 import { now } from '../lib/time.js';
@@ -29,12 +30,19 @@ router.post(
  * guessing. Public by necessity (it is read from the sign-in page, before there is
  * a session) and therefore gated on demo mode, so a real deployment cannot be
  * enumerated for usernames.
+ *
+ * The password is returned here rather than hard-coded in the sign-in page. It is
+ * a property of the *seed*, not of the interface: the seed script accepts a
+ * different one, and an interface that asserts `myopiaguard` would then confidently
+ * display a password that does not work. `DEMO_PASSWORD` is the single source of
+ * truth and this is the same demo-mode gate that already guards the usernames, so
+ * exposing it adds no new disclosure.
  */
 router.get(
   '/demo-accounts',
   handler((req, res) => {
     if (!config.demoMode && process.env.MG_ALLOW_DEMO_TOOLS !== '1') {
-      return res.json({ accounts: [], note: 'Account listing is only available in demo mode.' });
+      return res.json({ accounts: [], password: null, note: 'Account listing is only available in demo mode.' });
     }
     const rows = all(`SELECT username, role, display_name, title FROM users ORDER BY role DESC, username`, []);
     return res.json({
@@ -44,7 +52,8 @@ router.get(
         displayName: row.display_name,
         title: row.title,
       })),
-      note: 'Seeded teaching accounts. The password is set by the seed script.',
+      password: DEMO_PASSWORD,
+      note: 'Seeded teaching accounts. Every account shares the password returned in `password`.',
     });
   }),
 );

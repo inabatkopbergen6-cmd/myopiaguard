@@ -18,6 +18,16 @@ import { sanitizeMessage } from '../lib/validation.js';
  * is how many agents acknowledged the overlay, not how many were asked.
  */
 
+/**
+ * Fallback text for a broadcast sent with no message.
+ *
+ * This is the *API* default, deliberately not localised. The interface ships its
+ * own default in both dictionaries (`attention.defaultMessage`) and the composer
+ * always sends the text it is showing, so a teacher's broadcast is Russian or
+ * English according to their interface language — this constant is only reached by
+ * a direct API call that omits `message`. Localising it here would put a language
+ * decision in the server, which has no business knowing the reader's language.
+ */
 export const DEFAULT_ATTENTION_MESSAGE = 'Teacher Attention — Please look at the board.';
 
 export const ATTENTION_CAPABILITIES = Object.freeze({

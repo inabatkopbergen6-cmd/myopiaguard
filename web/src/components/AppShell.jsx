@@ -66,7 +66,6 @@ export default function AppShell({ children }) {
               <span className="sr-only">{t('nav.classroom')}</span>
               <select
                 className="select"
-                style={{ width: 'auto', minWidth: 210 }}
                 value={classroom?.id ?? ''}
                 onChange={(event) => setClassroomId(event.target.value)}
               >

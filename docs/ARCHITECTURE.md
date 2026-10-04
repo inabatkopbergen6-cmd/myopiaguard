@@ -117,6 +117,13 @@ follows a teacher to another computer. A classroom PC has no account, so its
 language comes from its room (`classrooms.language`) — configuration, not a control
 a student can flip.
 
+**Russian is the default** (`DEFAULT_LANGUAGE` in `web/src/i18n/languages.js`), and
+`web/index.html` declares `lang="ru"` to match, so a Russian school gets a Russian
+interface without configuring anything and without a flash of English before React
+boots. It is also the `t()` fallback dictionary — safe precisely because
+`server/test/i18n.test.js` fails the build if Russian is missing a key. English is
+still complete and still selectable, and a browser asking for `en` gets it.
+
 ### Schema migrations
 
 `db.js` has an explicit `ensureColumn()` helper. `CREATE TABLE IF NOT EXISTS` is a
@@ -225,7 +232,7 @@ construction.
 ## Testing
 
 ```bash
-npm test          # 95 tests, node:test, no network, ~2.5 s
+npm test          # 94 tests, node:test, no network, ~2.5 s
 ```
 
 | File | Covers |

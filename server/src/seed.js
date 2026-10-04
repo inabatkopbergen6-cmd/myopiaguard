@@ -1,6 +1,7 @@
 import { hashPassword } from './auth.js';
 import config, { CLASSROOM_DEFAULTS, DEMO_TIMINGS } from './config.js';
 import { closeDatabase, all, get, getDb, run, tx } from './db.js';
+import { DEMO_CLASSROOM_NAME, DEMO_PASSWORD } from './demo.js';
 import { pathToFileURL } from 'node:url';
 import { makeId, makeToken, mulberry32 } from './lib/ids.js';
 import { DAY, HOUR, MINUTE, localDayKey, now, startOfLocalDay, startOfLocalWeek } from './lib/time.js';
@@ -28,8 +29,10 @@ const between = (min, max) => min + rand() * (max - min);
 const intBetween = (min, max) => Math.round(between(min, max));
 const chance = (probability) => rand() < probability;
 
-export const DEMO_PASSWORD = 'myopiaguard';
-export const DEMO_CLASSROOM_NAME = 'Room 208 — Computer Science';
+// `DEMO_PASSWORD` and `DEMO_CLASSROOM_NAME` are imported from `./demo.js` and
+// re-exported here, so anything that already imports them from the seed keeps
+// working while the single definition lives somewhere with no import cycle.
+export { DEMO_CLASSROOM_NAME, DEMO_PASSWORD };
 
 const SCHOOL = { name: 'Riverside Secondary School' };
 
@@ -502,7 +505,26 @@ export async function seedDatabase({ force = false, demo = config.demoMode } = {
 
     // ---- History: the last four complete Mon–Fri weeks, then today up to now.
     const todayStart = startOfLocalDay(now());
-    const newestCompleteWeek = startOfLocalWeek(now() - 7 * DAY);
+    /*
+     * The Monday of the most recent Mon–Fri that has actually finished.
+     *
+     * This mirrors `weekRange(mode: 'last-complete')` exactly, and it has to: a
+     * report for "last complete week" reads *this* week, so if the seeded history
+     * is anchored anywhere else the report is empty.
+     *
+     * The bug this replaces was `startOfLocalWeek(now() - 7 * DAY)`, which is the
+     * previous week unconditionally. Those two agree only when today is a weekend:
+     *    Sat/Sun → most recent finished Mon–Fri is this week's   → same answer
+     *    Mon–Fri → most recent finished Mon–Fri is *last* week's → off by one week
+     * So seeding on a weekday produced four weeks of history ending a week earlier
+     * than every "last complete week" window the app asks for, and the weekly
+     * report — which prefers the stored snapshot — rendered zeros across the board.
+     * Verified: with today = Sunday, the report window is Mon 28 Sep – Fri 2 Oct,
+     * and the old anchor placed the whole seeded history in the week before it.
+     */
+    const currentMonday = startOfLocalWeek(now());
+    const lastCompleteMonday =
+      now() < currentMonday + 5 * DAY ? currentMonday - 7 * DAY : currentMonday;
     const totals = { sessions: 0, recommended: 0, completed: 0, longSessions: 0 };
     const historyTotals = { sessions: 0, recommended: 0, completed: 0, longSessions: 0 };
     const perClassroom = [];
@@ -526,7 +548,7 @@ export async function seedDatabase({ force = false, demo = config.demoMode } = {
       for (let weekIndex = 0; weekIndex < HISTORY_WEEKS; weekIndex += 1) {
         // weekIndex 0 is the oldest week; the last one is the most recent complete week.
         const weeksAgo = HISTORY_WEEKS - 1 - weekIndex;
-        const weekStart = newestCompleteWeek - weeksAgo * 7 * DAY;
+        const weekStart = lastCompleteMonday - weeksAgo * 7 * DAY;
         const adherence = Math.min(0.98, classroom.plan.adherence * ADHERENCE_RAMP[weekIndex]);
         let weekTotals = { sessions: 0, recommended: 0, completed: 0, longSessions: 0 };
         for (let dayIndex = 0; dayIndex < 5; dayIndex += 1) {

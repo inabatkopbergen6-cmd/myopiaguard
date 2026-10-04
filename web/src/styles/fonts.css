@@ -81,3 +81,42 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/* --------------------------------------------------------------- the fallbacks
+ *
+ * A `font-display: swap` face is invisible until its file arrives, and the
+ * fallback it swaps *from* is what the reader actually sees first. Left to the
+ * default, that fallback is the platform's generic `sans-serif`/`serif`, whose
+ * metrics differ enough from Manrope and Bitter that the swap visibly jumps:
+ * text reflows, headings change height, and a centred layout shifts sideways.
+ *
+ * `size-adjust` is the one descriptor that genuinely fixes this — it scales the
+ * fallback's glyphs so its x-height matches the real face, which removes almost
+ * all of the reflow. `ascent-override`/`descent-override`/`line-gap-override`
+ * pin the line box so a heading does not change height mid-swap either.
+ *
+ * The percentages are chosen from published x-height ratios rather than measured
+ * off these specific font files, and they are deliberately conservative: a
+ * fallback that is fractionally too small is invisible, whereas one that is too
+ * large reintroduces the jump the rule exists to remove. They are a refinement,
+ * not a correctness claim — the preloads in `index.html` are what make the real
+ * face arrive before first paint in the common case.
+ */
+
+@font-face {
+  font-family: 'Manrope Fallback';
+  src: local('Arial'), local('Helvetica Neue'), local('Liberation Sans'), local('Segoe UI');
+  size-adjust: 100%;
+  ascent-override: 100%;
+  descent-override: 27%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Bitter Fallback';
+  src: local('Georgia'), local('Times New Roman'), local('Liberation Serif');
+  size-adjust: 100%;
+  ascent-override: 94%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+}
+

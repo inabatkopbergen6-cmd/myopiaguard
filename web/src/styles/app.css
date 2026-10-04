@@ -26,12 +26,22 @@
   background: rgba(255, 255, 255, 0.86);
   backdrop-filter: blur(10px) saturate(1.2);
   border-bottom: var(--hairline);
-  flex-wrap: nowrap;
+  /*
+   * Wrapping, not clipping.
+   *
+   * This was `flex-wrap: nowrap`. With Russian labels the row is wider than the
+   * viewport somewhere above ~1300px, and `nowrap` plus `overflow-x: auto` on the
+   * nav turned the header into a horizontal scroll region with a *hidden*
+   * scrollbar — so the account menu and the sign-out button were simply outside the
+   * screen with no affordance saying so. Wrapping costs one extra row of header
+   * height in a narrow window and never hides a control.
+   */
+  flex-wrap: wrap;
+  row-gap: 8px;
   min-width: 0;
 }
 
-.topbar > .nav { min-width: 0; overflow-x: auto; scrollbar-width: none; }
-.topbar > .nav::-webkit-scrollbar { display: none; }
+.topbar > .nav { min-width: 0; overflow-x: auto; scrollbar-width: thin; }
 .topbar .brand { min-width: 0; }
 .topbar .brand > .stack { min-width: 0; overflow: hidden; }
 
@@ -88,8 +98,12 @@
 .nav a:hover { background: var(--ink-100); color: var(--ink-900); }
 .nav a[aria-current='page'] { background: var(--accent-soft); color: var(--distance-800); }
 
-.topbar__right { margin-left: auto; display: flex; align-items: center; gap: 7px; min-width: 0; flex: 0 1 auto; }
-.topbar__right .select { min-width: 0; max-width: 210px; text-overflow: ellipsis; }
+.topbar__right { margin-left: auto; display: flex; align-items: center; gap: 7px; min-width: 0; flex: 0 1 auto; flex-wrap: wrap; row-gap: 7px; }
+/* `min-width: 210px` was set inline on this select, so a room name in Russian
+   ("8 класс · Кабинет 208 — Информатика") was truncated at every width. It now
+   flexes between a floor and a ceiling and ellipsises only at the extreme. */
+.topbar__right .select { min-width: 0; width: auto; max-width: 240px; text-overflow: ellipsis; }
+.topbar__right > label { min-width: 0; }
 .nav-label { white-space: nowrap; }
 
 .live-pill {
@@ -160,7 +174,7 @@
   gap: 8px;
   font-size: var(--text-eyebrow);
   font-weight: 700;
-  letter-spacing: 0.13em;
+  letter-spacing: var(--track-eyebrow);
   text-transform: uppercase;
   color: var(--distance-600);
 }
@@ -183,10 +197,29 @@
 .stat { padding: 4px 18px; border-left: var(--hairline); min-width: 0; }
 .stat:first-child { border-left: 0; padding-left: 0; }
 
+/*
+ * When the strip wraps, the item that lands at the start of a new row must not
+ * keep its divider — otherwise the strip reads as a broken table with a stray
+ * vertical rule hanging in the middle of nowhere.
+ *
+ * 4-up is the design width for the dashboard strip and 5-up for the report
+ * metrics (which use their own `.metric-card` child), so the rules are written
+ * for those two counts and applied per breakpoint rather than generically.
+ */
+@media (max-width: 900px) {
+  .stat-strip { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+}
+@media (max-width: 560px) {
+  .stat-strip, .report-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat:nth-child(odd), .metric-card:nth-child(odd) { border-left: 0; padding-left: 0; }
+  .stat, .metric-card { padding-right: 10px; }
+  .page { padding: 16px 14px; }
+}
+
 .stat__label {
   font-size: var(--text-eyebrow);
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--ink-500);
 }
@@ -345,7 +378,13 @@
 .seat-list { display: flex; flex-direction: column; gap: 5px; }
 .seat-row {
   display: grid;
-  grid-template-columns: 92px 128px 1fr auto auto auto;
+  /*
+   * The first two columns were fixed at 92px and 128px. Both hold text, and both
+   * hold *translated* text: "PC-01" beside "2 ч 14 мин" fits 128px in English and
+   * does not in Russian ("2 ч 14 мин" is wider at the same font size). minmax()
+   * lets them take the space they need and stop taking it when the row is narrow.
+   */
+  grid-template-columns: minmax(80px, 92px) minmax(96px, 140px) minmax(0, 1fr) auto auto auto;
   gap: 12px;
   align-items: center;
   padding: 10px 12px;
@@ -613,7 +652,7 @@
 .metric-card__label {
   font-size: var(--text-eyebrow);
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--ink-500);
 }
@@ -672,16 +711,23 @@
 /* ------------------------------------------------------ language switcher */
 
 .lang-switch {
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 0 10px 0 10px;
+  padding: 0 10px;
   height: 36px;
+  min-height: 36px;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-control);
   background: var(--white);
   box-shadow: var(--shadow-xs);
-  transition: all var(--dur-fast) var(--ease-out);
+  /* Colour only, and named explicitly. This used to be `transition: all` on an
+     element that also sets a border colour and a background on hover — the same
+     pattern that made the enrolment button flicker, and this control lives inside
+     the very same `backdrop-filter` header. */
+  transition: border-color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
 }
 .lang-switch:hover {
   border-color: var(--distance-400);
@@ -703,20 +749,52 @@
   color: var(--ink-800);
   padding: 0 4px 0 0;
   cursor: pointer;
-  max-width: 125px;
+  /* Room for the longest endonym this could ever carry. At 125px the control was
+     truncating names like "Português (Brasil)"; the icon is 15px and the box gives
+     it back, so the ceiling is generous on purpose. */
+  max-width: 160px;
 }
 .lang-switch__select:focus { outline: none; }
+
+/* Compact variant, for the tight headers (`<LanguageSwitcher compact />`, used by
+   the classroom-PC bar). The class was already being applied by the component but
+   had no rule, so `compact` did nothing at all. The globe is dropped and the height
+   trimmed; the select stays focusable and keeps its accessible name via the
+   `.sr-only` label, so this is a visual reduction and not an accessibility one. */
+.lang-switch--compact {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 8px;
+  gap: 0;
+  box-shadow: none;
+}
+.lang-switch--compact .lang-switch__icon { display: none; }
+.lang-switch--compact .lang-switch__select { max-width: 130px; font-size: 0.8rem; }
 
 /* -------------------------------------------------------- device / kiosk view */
 
 .device {
   min-height: 100vh;
+  /*
+   * `100vh` on a phone is the height *including* the browser's retractable toolbar,
+   * so a full-height flex column overflows the visible area and whatever sits at
+   * the bottom is unreachable. `100dvh` tracks the dynamic viewport; the `vh`
+   * declaration stays first as the fallback for engines without `dvh`.
+   *
+   * The safe-area padding is for a classroom tablet in landscape: without it the
+   * device bar and the enrolment tile sit under the notch and behind the home
+   * indicator.
+   */
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--surface-sunken);
   position: relative;
   overflow-x: hidden;
   overflow-y: auto;
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .device::before {
@@ -904,17 +982,30 @@
 /* -------------------------------------------------- responsive topbar */
 
 @media (max-width: 1560px) { .topbar .brand__sub { display: none; } }
-@media (max-width: 1420px) {
+/* Labels used to survive down to 1420px. In Russian the row is wider, so the
+   label-collapse happens earlier — which is the honest fix rather than letting the
+   header overflow between 1420px and 1440px, the commonest laptop width there is. */
+@media (max-width: 1500px) {
   .nav-label { display: none; }
   .topbar .nav a { padding: 7px 9px; }
 }
-@media (max-width: 1240px) {
+@media (max-width: 1280px) {
   .btn-label { display: none; }
-  .topbar__right .select { max-width: 150px; }
+  .topbar__right .select { max-width: 180px; }
 }
 @media (max-width: 1080px) {
   .user-chip__meta { display: none; }
   .user-chip { padding: 4px; }
+}
+@media (max-width: 700px) {
+  .topbar { padding: 8px 12px; }
+  .page__head { gap: 10px; }
+  .dash, .report-grid { gap: 14px; }
+  .seat-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  .grade-bar { grid-template-columns: 72px 1fr; row-gap: 4px; }
+  .grade-bar > *:last-child { grid-column: 2; }
+  .modal { padding: 18px 16px; }
+  .drawer__head, .drawer__body { padding: 16px; }
 }
 
 /* ------------------------------------------------------------------ print */
@@ -923,7 +1014,13 @@
   body { background: var(--white); }
   .topbar, .nav, .no-print, .toast-region { display: none !important; }
   .page { padding: 0; max-width: none; }
-  .card, .panel, .metric-card { box-shadow: none; break-inside: avoid; }
+  .card, .metric-card { box-shadow: none; break-inside: avoid; }
+  /*
+   * The report is routinely printed from a browser to PDF, so the two places the
+   * design leans on colour to carry meaning have to survive a printer that drops
+   * backgrounds — the metric strip's dividers and the deep adherence hero.
+   */
+  .card, .metric-card, .stat { border-color: var(--ink-300); }
   .adherence-hero { background: var(--ink-100) !important; color: var(--ink-900) !important; }
   .adherence-hero::after { display: none; }
   .report-grid { grid-template-columns: 1fr; }

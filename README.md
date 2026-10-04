@@ -20,10 +20,35 @@ npm run seed:demo -- --force    # 8 classrooms, 92 workstations, 4 weeks of hist
 MG_DEMO=1 npm start             # http://localhost:4000
 ```
 
-Sign in as `teacher.avery` / `myopiaguard` (the sign-in page lists the other
-seeded accounts). The dashboard opens on **Room 208 — Computer Science**, already
-live, with seats working, one on a break, one PC switched off, and one seat
-flagged for missing two breaks in a row.
+Sign in as `teacher.avery` / `myopiaguard`. The dashboard opens on **Room 208 —
+Computer Science**, already live, with seats working, one on a break, one PC
+switched off, and one seat flagged for missing two breaks in a row.
+
+### Seeded demo accounts
+
+The seed script creates five accounts. **All five share the password
+`myopiaguard`** — one scrypt hash per account with its own random salt.
+
+| Username | Password | Role | Name / title | Access |
+| --- | --- | --- | --- | --- |
+| `teacher.avery` | `myopiaguard` | teacher | Ms. Avery — Computing teacher | Room 208 — Computer Science, Room 210 — Mathematics |
+| `teacher.okafor` | `myopiaguard` | teacher | Mr. Okafor — Design & Technology teacher | Room 305 — Computer Science, Room 307 — Design & Technology |
+| `teacher.lindqvist` | `myopiaguard` | teacher | Ms. Lindqvist — Science teacher | Room 112 — Science, Room 114 — Humanities |
+| `teacher.moreau` | `myopiaguard` | teacher | Mr. Moreau — Media & Computing teacher | Room 401 — Computer Science, Room 403 — Media Studies |
+| `admin.rivera` | `myopiaguard` | **admin** | Principal Rivera — School administrator | School analytics (aggregate only — no classroom or seat drill-down) |
+
+A teacher only ever sees the rooms listed above: signing in as `teacher.okafor`
+and asking for Room 208's snapshot returns `403`. Sign in as `admin.rivera` to see
+the aggregate-only analytics surface and the Focus Mode resource catalogue, which
+only an admin can edit.
+
+> **These credentials are for local demos only.** The seed script writes them into
+> whatever database `MG_DB` points at, so a seeded database must never be exposed to
+> a network. See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — real deployments need
+> their own accounts, and the demo tools stay off without `MG_DEMO=1`.
+
+The sign-in page also lists these accounts (with a click-to-fill control) when it
+is running against a seeded database, and hides that list otherwise.
 
 `MG_DEMO=1` shortens the walkthrough room's cadence to a break every 2 minutes so
 a full cycle is observable in under a minute, and enables the demo controls listed
@@ -47,7 +72,7 @@ simulated PCs per seat, so the dashboard hands that seat over to your tab.
 | 5 | School analytics — adherence by grade, highest visual load classrooms/subjects, most common issue, weekly/monthly trend, aggregate-only | `web/src/pages/SchoolAnalyticsPage.jsx`, `server/src/services/analytics.js` |
 | 6 | Attention Mode — broadcast to every screen, custom or default message, teacher-set duration, clearable | `web/src/components/AttentionModeDialog.jsx`, `server/src/services/attention.js` |
 | 7 | Focus Mode — resource checklist, session-scoped allowlist, versioned policy document, pluggable enforcement | `web/src/components/FocusModePanel.jsx`, `server/src/services/focus.js`, `extensions/myopiaguard-focus/`, [`docs/FOCUS_MODE_DECISION.md`](docs/FOCUS_MODE_DECISION.md) |
-| + | **Language switcher** — English and Russian across every surface, including the student break screen | `web/src/i18n/`, `web/src/components/LanguageSwitcher.jsx` |
+| + | **Russian-first interface** — opens in Russian, with English a click away, across every surface including the student break screen | `web/src/i18n/`, `web/src/components/LanguageSwitcher.jsx` |
 
 ## How it works
 
@@ -71,35 +96,48 @@ child's break rhythm — and why a modified client cannot claim a 20-second brea
 
 ### Languages
 
-English and Russian ship today; adding another is an entry in
-`web/src/i18n/languages.js` plus a dictionary file, with no component changes. Two
-details make it correct rather than approximate:
+**Russian is the default.** The product opens in Russian — sign-in page,
+dashboards and the student break screen — so a Russian school needs no
+configuration to get a Russian interface. English is a first-class alternative:
+pick it in the switcher, or let the browser's `Accept-Language` ask for it.
+
+Adding a third language is an entry in `web/src/i18n/languages.js` plus a
+dictionary file, with no component changes. Three details make it correct rather
+than approximate:
 
 - **Real plural rules.** Russian needs one/few/many/other, selected through
   `Intl.PluralRules` — so 1 рабочее место, 2 рабочих места and 5 рабочих мест are
   each right. English's two forms are the same mechanism.
 - **Numbers and dates follow the language.** "1,625" and "89.6%" become "1 625" and
   "89,6%".
+- **Typography follows the language too.** Cyrillic needs less uppercase
+  letterspacing than Latin and no synthesised oblique, so tracking is driven by
+  `--track-*` tokens that a `:lang(ru)` block reduces, and `font-synthesis: none`
+  refuses the smeared fake italic a browser would otherwise invent.
 
 Teachers pick a language in the top bar; the choice is stored on the account, so it
 follows them to another computer. A classroom PC has no account, so its language is
 set per room in Setup — the screens a child reads are configured by the school, not
 flippable by whoever sits down. `server/test/i18n.test.js` fails the build on a
-missing key, an incomplete Russian plural, or a `t()`/`tn()` mix-up.
+missing key, an incomplete Russian plural, or a `t()`/`tn()` mix-up — which is why
+defaulting to Russian is safe: the dictionary cannot be incomplete without failing
+the build.
 
-Full detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+Full detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and
+[`IDEA.md`](IDEA.md#8-internationalisation--russian-first).
 
 ## The principles, and where they are enforced
 
 | Principle | Enforced by |
 | --- | --- |
-| Never show a student identity | A `CHECK` constraint plus `assertSeatLabel()`; one API test asserts `400 pii_rejected` and the schema test asserts the device never emits a person-shaped field |
+| Never show a student identity | A `CHECK` constraint plus `assertSeatLabel()`; the API test asserts a person-shaped label is refused, and the dashboard test scans the real payload for person-shaped fields |
 | School analytics are aggregate-only | Four independent controls: role gate, identifier-parameter refusal, a response-body guard, and k-anonymity suppression. The API test scans the real admin payload for seat labels |
 | Attention Mode is not remote control | The capability set (`inputLock: false`, …) is in every payload, the overlay says it on screen, and those capabilities do not exist in the codebase |
 | Interruptions are predictable | The warning rows are created before a break is due and the timing contract is covered by `server/test/scheduler.test.js` |
 
 Read [`docs/PRIVACY.md`](docs/PRIVACY.md) for the full statement, including what is
-deliberately *not* collected.
+deliberately *not* collected, and [§10 of `IDEA.md`](IDEA.md#10-known-defects-and-open-risks)
+for the honest list of where these controls are weaker than they look.
 
 ## Commands
 
@@ -112,7 +150,7 @@ npm start                 # serve API + built web app on :4000
 npm run dev               # server (watch) + Vite dev server together
 npm run dev:server        # just the API
 npm run dev:web           # just the SPA on :5173 (proxies /api and /live)
-npm test                  # 95 server tests, node:test, no network needed
+npm test                  # 94 server tests, node:test, no network needed
 npm run seed              # seed an empty database
 npm run seed:demo -- --force   # reseed the demo school
 ```
@@ -128,6 +166,13 @@ reference the rest of the product borrows from.
 - **Type**: Bitter (slab serif) for headings, Manrope (grotesk) for interface text.
   Both self-hosted so a classroom PC renders correctly with no internet, and both
   chosen partly *because* they ship Cyrillic — most fashionable display serifs do not.
+  Both are variable fonts covering every weight the CSS asks for, the Cyrillic
+  subsets are preloaded, and metric-matched local fallbacks mean the swap from
+  fallback to webfont does not move the page.
+- **Cyrillic is the default, so it is the case that gets tuned**: uppercase
+  letterspacing comes from `--track-*` tokens that a `:lang(ru)` block reduces, and
+  `font-synthesis: none` refuses the smeared fake italic a browser would otherwise
+  invent for Russian.
 - **Surfaces**: flat by default. A box gets a hairline border, a tint, or a deep fill
   — never all three, and never a shadow unless it genuinely floats above the page.
 - **Colour**: deep green is the brand, pulled from the break screen into every page.
@@ -140,6 +185,9 @@ reference the rest of the product borrows from.
 of every element on the student screens — it caught a rail that dropped to 1.0:1 as
 the sun set.
 
+The full CSS and UI analysis — every defect found, why it mattered, and what
+changed — is in [`IDEA.md` §14](IDEA.md#14-css-and-ui-analysis--what-was-wrong-and-what-changed).
+
 ## Project layout
 
 ```
@@ -150,7 +198,7 @@ myopiaguard/
 │   │   ├── services/  scheduler · sessionState · breaks · dashboard · reports
 │   │   │              analytics · attention · focus · agentState · demoAgents
 │   │   └── lib/       validation (privacy gates) · http (aggregate guard) · time
-│   └── test/          95 tests: domain, scheduler, privacy, end-to-end API, i18n
+│   └── test/          94 tests: domain, scheduler, privacy, end-to-end API, i18n
 ├── web/               React SPA — teacher dashboard, reports, analytics, device agent
 │   └── src/
 │       ├── pages/     TeacherDashboard · WeeklyReportPage · SchoolAnalyticsPage
@@ -169,6 +217,7 @@ myopiaguard/
 
 | Document | Read it for |
 | --- | --- |
+| [`IDEA.md`](IDEA.md) | **The complete engineering picture**: the idea, architecture, data model, break lifecycle, API, design system, Russian-first i18n, the privacy model *and* the verified list of where it is weaker than it looks |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System shape, module map, data model, realtime protocol, failure behaviour, tests |
 | [`docs/API.md`](docs/API.md) | Every endpoint with request/response shapes and status codes |
 | [`docs/PRIVACY.md`](docs/PRIVACY.md) | The privacy commitment and the exact mechanism enforcing each part |
@@ -188,7 +237,10 @@ myopiaguard/
   package per platform, nothing to keep patched on ninety machines.
 - **`npm test` is honest about coverage.** The extension in `extensions/` is a
   reviewed reference implementation that the suite does not execute (extension
-  service workers need a real browser profile); its README says so explicitly.
+  service workers need a real browser profile); its README says so explicitly. The
+  same section of [`IDEA.md`](IDEA.md#10-known-defects-and-open-risks) records what
+  the tests do *not* cover — no WebSocket tests, no cross-school tests — rather than
+  implying the suite is complete.
 
 ## Licence
 

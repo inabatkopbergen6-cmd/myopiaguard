@@ -140,14 +140,14 @@
 .window__eyebrow {
   font-size: 0.82rem;
   font-weight: 750;
-  letter-spacing: 0.19em;
+  letter-spacing: var(--track-wide);
   text-transform: uppercase;
   color: var(--on-dark-accent);
 }
 
 .window__eyebrow--seat {
   font-size: 0.72rem;
-  letter-spacing: 0.13em;
+  letter-spacing: var(--track-eyebrow);
   color: var(--on-dark-muted);
 }
 
@@ -179,7 +179,7 @@
 
 .window__count-label {
   font-size: 0.7rem;
-  letter-spacing: 0.24em;
+  letter-spacing: var(--track-wide);
   text-transform: uppercase;
   color: var(--on-dark-accent);
   margin-top: -6px;
@@ -318,6 +318,13 @@
 }
 .window--attention .window__sky { display: none; }
 
+/* The break screen owns the whole viewport, so it is also the one surface that
+   must not collide with a notch or a home indicator on the tablets schools
+   actually use. Only the footer needs clearing — the scene is decorative. */
+.window__footer {
+  padding-bottom: calc(15px + env(safe-area-inset-bottom, 0px));
+}
+
 .attention-message {
   font-family: var(--font-display);
   font-size: clamp(1.7rem, 5vw, 3.2rem);
@@ -340,7 +347,7 @@
   color: var(--on-dark);
   font-size: 0.75rem;
   font-weight: 750;
-  letter-spacing: 0.14em;
+  letter-spacing: var(--track-eyebrow);
   text-transform: uppercase;
 }
 
@@ -352,4 +359,29 @@
   .window__instruction { font-size: clamp(1.2rem, 3vw, 1.8rem); }
   .window__sun { width: 78px; height: 78px; }
   .window__horizon { top: 70%; }
+}
+
+/* ------------------------------------------------------------------- Russian
+ *
+ * The `ch` unit is the width of a "0", which is the wrong ruler for Cyrillic
+ * running text: Russian words are longer, so the same cap that produces three
+ * comfortable lines in English produces four cramped ones. The measure is opened
+ * up and the bottom line-height allowed to breathe, so the instruction on the
+ * break screen still reads as an instruction rather than a paragraph.
+ */
+:lang(ru) .window__instruction { max-width: 25ch; line-height: 1.28; }
+:lang(ru) .attention-message { max-width: 28ch; line-height: 1.26; }
+:lang(ru) .window__hint { max-width: 52ch; }
+
+/* A student screen is the one place a forced-colours user is most likely to be
+   let down by a scene painted entirely in gradients: with backgrounds dropped, the
+   sun and the horizon vanish and only the text survives. Keep the text legible and
+   give the progress rail a real border so it is still a progress indicator. */
+@media (forced-colors: active) {
+  .window { background: Canvas; color: CanvasText; }
+  .window__sky, .window__bands, .window__sun, .window__trail, .window__haze { display: none; }
+  .window__horizon-line { border: 1px solid CanvasText; background: Canvas; }
+  .window__horizon-fill { background: Highlight; box-shadow: none; }
+  .window__footer { border-top-color: CanvasText; background: Canvas; }
+  .window__footer-button { color: ButtonText; border-color: ButtonText; }
 }

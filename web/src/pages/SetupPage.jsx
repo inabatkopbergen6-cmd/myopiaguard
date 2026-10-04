@@ -3,6 +3,7 @@ import { api } from '../api/client.js';
 import { useResource } from '../api/hooks.js';
 import { useClassroom } from '../App.jsx';
 import { useI18n } from '../i18n/index.jsx';
+import { DEFAULT_LANGUAGE } from '../i18n/languages.js';
 import { Badge, Callout, Card, EmptyState, ErrorNote, Spinner } from '../components/ui.jsx';
 import { CheckIcon, MonitorIcon, ShieldIcon } from '../lib/icons.jsx';
 import { clockTime, duration, relativeTime } from '../lib/format.js';
@@ -174,7 +175,7 @@ export default function SetupPage() {
                     <span>{t('setup.languageLabel')}</span>
                     <select
                       className="select"
-                      value={draft.language ?? 'en'}
+                      value={draft.language ?? DEFAULT_LANGUAGE}
                       onChange={(event) => setDraft({ ...draft, language: event.target.value })}
                     >
                       {languages.map((entry) => (

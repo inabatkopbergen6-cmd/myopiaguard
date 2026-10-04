@@ -35,6 +35,14 @@ export default function LoginPage({ onSignedIn }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [accounts, setAccounts] = useState([]);
+  /**
+   * The demo password, as reported by the server rather than assumed here.
+   *
+   * It is a property of the seed (`DEMO_PASSWORD` on the server), not of this page,
+   * so hard-coding it would let the panel display a password that does not work the
+   * moment anyone seeds with a different one. `null` until the server answers.
+   */
+  const [demoPassword, setDemoPassword] = useState(null);
   const [demoOpen, setDemoOpen] = useState(true);
   /**
    * Depth of field: the hero's atmospheric distance layer sharpens as attention
@@ -45,8 +53,14 @@ export default function LoginPage({ onSignedIn }) {
   useEffect(() => {
     api
       .demoAccounts()
-      .then((data) => setAccounts(data.accounts ?? []))
-      .catch(() => setAccounts([]));
+      .then((data) => {
+        setAccounts(data.accounts ?? []);
+        setDemoPassword(data.password ?? null);
+      })
+      .catch(() => {
+        setAccounts([]);
+        setDemoPassword(null);
+      });
   }, []);
 
   async function submit(event) {
@@ -66,9 +80,19 @@ export default function LoginPage({ onSignedIn }) {
     }
   }
 
+  /**
+   * Click-to-fill for a seeded account.
+   *
+   * The password comes from the server (see `demoPassword`), never from a literal
+   * here: this used to hard-code `'myopiaguard'`, which silently filled the form
+   * with a password that is wrong for any seed that used a different one. The
+   * button is only rendered once the password is known, and the guard keeps that
+   * contract explicit rather than relying on render order.
+   */
   function useAccount(account) {
+    if (!demoPassword) return;
     setUsername(account.username);
-    setPassword('myopiaguard');
+    setPassword(demoPassword);
     setError(null);
   }
 
@@ -222,7 +246,9 @@ export default function LoginPage({ onSignedIn }) {
             </div>
           </form>
 
-          {accounts.length > 0 && (
+          {/* Rendered only when the server has given us both the accounts and the
+              password they share, so the panel can never list a login it cannot fill in. */}
+          {accounts.length > 0 && demoPassword && (
             <div className="auth__demo-box">
               <button
                 type="button"
@@ -232,7 +258,11 @@ export default function LoginPage({ onSignedIn }) {
               >
                 <ShieldIcon size={15} />
                 <span className="auth__demo-trigger-label">{t('auth.showDemoAccounts')}</span>
-                <span className="auth__demo-pass">{t('auth.demoPasswordLabel', { password: 'myopiaguard' })}</span>
+                {/* Only rendered once the server has told us the password, so the
+                    panel can never advertise one that is not the real seed value. */}
+                {demoPassword && (
+                  <span className="auth__demo-pass">{t('auth.demoPasswordLabel', { password: demoPassword })}</span>
+                )}
                 <ChevronIcon size={14} className={`auth__demo-chevron ${demoOpen ? 'is-open' : ''}`} />
               </button>
 

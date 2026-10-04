@@ -23,7 +23,20 @@ export const LANGUAGES = Object.freeze([
   },
 ]);
 
-export const DEFAULT_LANGUAGE = 'en';
+/**
+ * The language the product opens in when nothing else decides.
+ *
+ * This is Russian: the deployment this ships to is a Russian school, so the
+ * out-of-the-box experience — including the sign-in page and every student-facing
+ * screen — must be Russian without anybody having to find a switcher first.
+ *
+ * This is also the *fallback* dictionary for `t()`, so a key that somehow reached
+ * the UI untranslated resolves to Russian rather than English. English remains a
+ * first-class language: it is still in `LANGUAGES`, still complete, and selecting
+ * it in the switcher (or having `en` in the browser's `Accept-Language`) overrides
+ * this default in every case.
+ */
+export const DEFAULT_LANGUAGE = 'ru';
 
 const BY_CODE = new Map(LANGUAGES.map((entry) => [entry.code, entry]));
 
